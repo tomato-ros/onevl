@@ -585,7 +585,7 @@ def main():
         latent_block = (
             "<|start-latent|>"
             + "<|latent|>" * args.num_latent
-            + f"<|end-latent|><answer>{ans_pfx}"
+            + f"<|end-latent|><answer>"
         )
     assistant_prefix = latent_block
 

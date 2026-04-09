@@ -14,6 +14,7 @@ OUTPUT_PATH=${OUTPUT_PATH:-"${ROOT_DIR}/output/impromptu/impromptu_results.json"
 MODEL_PATH=/e2e-data/evad-tech-vla/lujinghui/ms-swift/outputs/impromptu/checkpoint-200
 TEST_SET_PATH=${ROOT_DIR}/test_data/impromptu_test.jsonl
 IMAGE_BASE_PATH=/e2e-data/embodied-research-data/opendata/
+ANSWER_PREFIX=""
 
 export MODEL_PATH TEST_SET_PATH IMAGE_BASE_PATH OUTPUT_PATH
 export DECODER_EXPLAIN VISUAL_DECODER_EXPLAIN

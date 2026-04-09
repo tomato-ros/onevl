@@ -3,13 +3,16 @@
 
 Usage:
   python eval_results.py roadwork [--json_path ...] [--tail_points 15] [--no_denorm]
-  python eval_results.py impromptu [--results_json ...] [--test_jsonl ...]
+  python eval_results.py impromptu [--results_json ... | --results_jsonl ...] [--test_jsonl ...]
 
 Roadwork: 0–1000 coordinates → pixels via first user image; ADE/FDE on last ``tail_points``
 GT waypoints vs predictions (mean L2 / final L2); reports mean ``latency`` (seconds) on evaluated samples.
 
-Impromptu: BEV meters; GT from ``test_jsonl`` assistant answer when ``GT`` is empty; same
-metrics as ``eval_onevl.py`` (L2 @ 1–4s, ADE, FDE over 10 points).
+Impromptu: BEV meters; same metrics as ``eval_onevl.py`` (L2 @ 1–4s, ADE, FDE).
+
+  - ``--results_json``: OneVL ``impromptu_results.json`` (GT often empty → needs ``--test_jsonl``).
+  - ``--results_jsonl``: ms-swift infer JSONL (per line: ``response``, ``labels``); GT from
+    ``labels`` unless ``--test_jsonl`` is given for fallback.
 """
 from __future__ import annotations
 
@@ -284,6 +287,17 @@ def load_jsonl(path: Path) -> List[Dict[str, Any]]:
     return rows
 
 
+def _impromptu_latency_seconds(row: Dict[str, Any]) -> float:
+    for key in ("latency", "infer_time", "generation_time", "time_seconds"):
+        v = row.get(key)
+        if v is not None:
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                pass
+    return 0.0
+
+
 def cmd_impromptu(argv: Optional[Sequence[str]] = None) -> int:
     script_dir = Path(__file__).resolve().parent
     ap = argparse.ArgumentParser(description="Impromptu metrics (BEV meters)")
@@ -291,21 +305,62 @@ def cmd_impromptu(argv: Optional[Sequence[str]] = None) -> int:
         "--results_json",
         type=Path,
         default=script_dir / "output/impromptu/impromptu_results.json",
+        help="OneVL-style array JSON (e.g. impromptu_results.json)",
+    )
+    ap.add_argument(
+        "--results_jsonl",
+        type=Path,
+        default=None,
+        help="ms-swift infer JSONL (fields: response, labels, messages, …)",
     )
     ap.add_argument(
         "--test_jsonl",
         type=Path,
-        default=script_dir / "test_data/impromptu_test.jsonl",
+        default=None,
+        help="GT fallback: assistant <answer> per line. Default when using --results_json only.",
     )
     ap.add_argument("--output_eval_json", type=Path, default=None)
     ap.add_argument("--output_excel", type=Path, default=None)
     args = ap.parse_args(argv)
 
-    with open(args.results_json, encoding="utf-8") as f:
-        results: List[Dict[str, Any]] = json.load(f)
-    test_rows = load_jsonl(args.test_jsonl)
+    results_path_display: str
+    test_jsonl_resolved: Optional[Path] = None
+    if args.results_jsonl is not None:
+        p = Path(args.results_jsonl)
+        if not p.is_file():
+            print(f"ERROR: results_jsonl not found: {p}", file=sys.stderr)
+            return 1
+        results = load_jsonl(p)
+        results_path_display = str(p)
+        if args.test_jsonl is None:
+            test_rows: Optional[List[Dict[str, Any]]] = None
+        else:
+            tp = Path(args.test_jsonl)
+            if not tp.is_file():
+                print(f"ERROR: test_jsonl not found: {tp}", file=sys.stderr)
+                return 1
+            test_rows = load_jsonl(tp)
+            test_jsonl_resolved = tp
+    else:
+        pj = Path(args.results_json)
+        if not pj.is_file():
+            print(f"ERROR: results_json not found: {pj}", file=sys.stderr)
+            return 1
+        with open(pj, encoding="utf-8") as f:
+            results = json.load(f)
+        results_path_display = str(pj)
+        tpath = (
+            Path(args.test_jsonl)
+            if args.test_jsonl is not None
+            else script_dir / "test_data/impromptu_test.jsonl"
+        )
+        if not tpath.is_file():
+            print(f"ERROR: test_jsonl not found: {tpath}", file=sys.stderr)
+            return 1
+        test_rows = load_jsonl(tpath)
+        test_jsonl_resolved = tpath
 
-    if len(results) != len(test_rows):
+    if test_rows is not None and len(results) != len(test_rows):
         print(
             f"ERROR: length mismatch results={len(results)} test_jsonl={len(test_rows)}",
             file=sys.stderr,
@@ -317,21 +372,36 @@ def cmd_impromptu(argv: Optional[Sequence[str]] = None) -> int:
     per_sample: List[Dict[str, Any]] = []
     skipped = 0
 
-    for idx, (sample_res, sample_test) in enumerate(zip(results, test_rows)):
+    for idx, sample_res in enumerate(results):
         try:
-            latency = float(sample_res.get("latency", 0.0))
+            latency = _impromptu_latency_seconds(sample_res)
             image_id = _impromptu_image_id(sample_res["messages"])
 
             gt_src = (sample_res.get("GT") or "").strip()
+            if not gt_src:
+                lab = sample_res.get("labels")
+                if isinstance(lab, str):
+                    gt_src = lab.strip()
+
             if gt_src:
                 gt_traj = extract_gt_trajectory_imp(gt_src)
-            else:
+            elif test_rows is not None:
+                sample_test = test_rows[idx]
                 assistant = ""
                 if len(sample_test.get("messages", [])) > 1:
                     assistant = sample_test["messages"][1].get("content", "") or ""
                 gt_traj = extract_gt_trajectory_imp(assistant)
+            else:
+                gt_traj = []
 
-            pred_traj = extract_pred_trajectory_imp(sample_res.get("output_text", ""))
+            pred_raw = (
+                sample_res.get("output_text")
+                or sample_res.get("response")
+                or ""
+            )
+            pred_traj = extract_pred_trajectory_imp(
+                pred_raw if isinstance(pred_raw, str) else ""
+            )
             if not gt_traj or not pred_traj:
                 skipped += 1
                 continue
@@ -368,8 +438,14 @@ def cmd_impromptu(argv: Optional[Sequence[str]] = None) -> int:
         print("No valid impromptu samples.", file=sys.stderr)
         return 1
 
+    if test_rows is None:
+        gt_note = "per-row labels/GT"
+    else:
+        gt_note = f"row labels/GT if present, else {test_jsonl_resolved}"
     final_eval = {
         "task": "impromptu",
+        "results_path": results_path_display,
+        "gt_source": gt_note,
         "total_samples": n,
         "skipped": skipped,
         "avg_latency": round(float(np.mean(total_metrics["latency"])), 4),
@@ -383,8 +459,11 @@ def cmd_impromptu(argv: Optional[Sequence[str]] = None) -> int:
 
     print("=" * 50)
     print("Impromptu (eval_onevl.py style, meters)")
-    print(f"results: {args.results_json}")
-    print(f"GT from: {args.test_jsonl}")
+    print(f"results: {results_path_display}")
+    if test_rows is None:
+        print("GT from: row labels/GT only (no test_jsonl)")
+    else:
+        print(f"GT from: row labels/GT if present, else {test_jsonl_resolved}")
     print(f"有效样本：{n} / {len(results)}，skip：{skipped}")
     print(f"平均延迟：{final_eval['avg_latency']} s")
     print(
