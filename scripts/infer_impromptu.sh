@@ -11,9 +11,9 @@ VISUAL_DECODER_EXPLAIN=${VISUAL_DECODER_EXPLAIN:-false}
 OUTPUT_PATH=${OUTPUT_PATH:-"${ROOT_DIR}/output/impromptu/impromptu_results.json"}
 
 # ---- Fixed ----
-MODEL_PATH=/e2e-data/evad-tech-vla/lujinghui/ms-swift/outputs/impromptu/checkpoint-200
+MODEL_PATH=""
 TEST_SET_PATH=${ROOT_DIR}/test_data/impromptu_test.jsonl
-IMAGE_BASE_PATH=/e2e-data/embodied-research-data/opendata/
+IMAGE_BASE_PATH=""
 ANSWER_PREFIX=""
 
 export MODEL_PATH TEST_SET_PATH IMAGE_BASE_PATH OUTPUT_PATH

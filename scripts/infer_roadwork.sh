@@ -11,9 +11,9 @@ VISUAL_DECODER_EXPLAIN=${VISUAL_DECODER_EXPLAIN:-false}
 OUTPUT_PATH=${OUTPUT_PATH:-"${ROOT_DIR}/output/roadwork/roadwork_results.json"}
 
 # ---- Fixed ----
-MODEL_PATH=/e2e-data/evad-tech-vla/lujinghui/ms-swift/outputs/roadwork/qwen3_vl_latent_cot_stage2_vis4_txt2_fixbug_512_bs64_with_viscondition/v0-20260324-031631/checkpoint-1260
+MODEL_PATH=""
 TEST_SET_PATH=${ROOT_DIR}/test_data/roadwork_test.json
-IMAGE_BASE_PATH=/e2e-data/embodied-research-data/opendata/
+IMAGE_BASE_PATH=""
 PREFIX_K=5
 ANSWER_PREFIX="[["
 
