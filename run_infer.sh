@@ -26,7 +26,7 @@ OUTPUT_PATH=${OUTPUT_PATH:-"${MODEL_PATH}/infer_results/onevl_merged.json"}
 NUM_LATENT=${NUM_LATENT:-2}
 NUM_LATENT_VIS=${NUM_LATENT_VIS:-4}
 MAX_NEW_TOKENS=${MAX_NEW_TOKENS:-1024}
-ANSWER_PREFIX=${ANSWER_PREFIX:-"[["}
+ANSWER_PREFIX=${ANSWER_PREFIX:-""}
 PREFIX_K=${PREFIX_K:-0}
 
 # ---- Aux text decoder (set DECODER_EXPLAIN=true to enable) ----
@@ -73,6 +73,7 @@ echo "  OUTPUT_PATH:              ${OUTPUT_PATH}"
 echo "  NUM_LATENT / VIS:         ${NUM_LATENT} / ${NUM_LATENT_VIS}"
 echo "  DECODER_EXPLAIN:          ${DECODER_EXPLAIN}"
 echo "  VISUAL_DECODER_EXPLAIN:   ${VISUAL_DECODER_EXPLAIN}"
+echo "  ANSWER_PREFIX:            ${ANSWER_PREFIX}"
 echo "======================================"
 
 # ============================================================================

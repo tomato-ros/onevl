@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Unified evaluation for OneVL opensource inference outputs: **roadwork** and **impromptu**.
+"""Unified evaluation for OneVL opensource inference outputs: **roadwork**, **impromptu**, **ar1**.
 
 Usage:
   python eval_results.py roadwork [--json_path ...] [--tail_points 15] [--no_denorm]
   python eval_results.py impromptu [--results_json ... | --results_jsonl ...] [--test_jsonl ...]
+  python eval_results.py ar1 [--results_json ...] [--test_jsonl ...]
 
 Roadwork: 0–1000 coordinates → pixels via first user image; ADE/FDE on last ``tail_points``
 GT waypoints vs predictions (mean L2 / final L2); reports mean ``latency`` (seconds) on evaluated samples.
@@ -13,6 +14,10 @@ Impromptu: BEV meters; same metrics as ``eval_onevl.py`` (L2 @ 1–4s, ADE, FDE)
   - ``--results_json``: OneVL ``impromptu_results.json`` (GT often empty → needs ``--test_jsonl``).
   - ``--results_jsonl``: ms-swift infer JSONL (per line: ``response``, ``labels``); GT from
     ``labels`` unless ``--test_jsonl`` is given for fallback.
+
+AR1: ego-frame trajectory in **meters**; GT from ``ar1_test.jsonl`` assistant ``<answer>``;
+``output_text`` may omit a leading ``[[``; match by first image path suffix ``ar1_labels.v2/...``.
+ADE / FDE align ``eval_ade_fde_onevl_jsonl.py``; reports mean **latency**.
 """
 from __future__ import annotations
 
@@ -495,13 +500,224 @@ def cmd_impromptu(argv: Optional[Sequence[str]] = None) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# AR1 (ego-frame trajectory, meters)
+# ---------------------------------------------------------------------------
+
+_AR1_ANSWER_RE = re.compile(
+    r"<answer>\s*(\[\[.*?\]\])\s*</answer>", re.DOTALL | re.IGNORECASE
+)
+
+
+def _canonical_ar1_image_key(path: str) -> str:
+    p = path.replace("\\", "/")
+    i = p.find("ar1_labels.v2/")
+    if i >= 0:
+        return p[i:]
+    return p
+
+
+def _ar1_first_user_image(entry: Dict[str, Any]) -> Optional[str]:
+    for m in entry.get("messages") or []:
+        if m.get("role") != "user":
+            continue
+        c = m.get("content")
+        if isinstance(c, list):
+            for part in c:
+                if isinstance(part, dict) and part.get("type") == "image":
+                    p = part.get("image") or part.get("image_url")
+                    if isinstance(p, str) and p.strip():
+                        return p.strip()
+        break
+    return None
+
+
+def _ar1_parse_gt_from_messages(obj: Dict[str, Any]) -> Optional[List[List[float]]]:
+    for m in obj.get("messages") or []:
+        if m.get("role") != "assistant":
+            continue
+        content = m.get("content") or ""
+        ma = _AR1_ANSWER_RE.search(content)
+        if not ma:
+            continue
+        try:
+            raw = json.loads(ma.group(1))
+            return [[float(p[0]), float(p[1])] for p in raw]
+        except (json.JSONDecodeError, TypeError, ValueError, IndexError):
+            continue
+    return None
+
+
+def _load_ar1_gt_map(gt_path: Path) -> Dict[str, List[List[float]]]:
+    by_image: Dict[str, List[List[float]]] = {}
+    with gt_path.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            obj = json.loads(line)
+            traj = _ar1_parse_gt_from_messages(obj)
+            imgs = obj.get("images") or []
+            if traj is None or not imgs:
+                continue
+            key0 = imgs[0] if isinstance(imgs[0], str) else ""
+            if not key0:
+                continue
+            k = _canonical_ar1_image_key(key0)
+            by_image[k] = traj
+    return by_image
+
+
+def _ar1_parse_pred_from_output_text(text: str) -> Optional[List[List[float]]]:
+    if not text:
+        return None
+    text = text.strip()
+    pairs = re.findall(
+        r"\[\s*([-+]?\d*\.?\d+)\s*,\s*([-+]?\d*\.?\d+)\s*\]", text
+    )
+    m0 = re.match(
+        r"^([-+]?\d*\.?\d+)\s*,\s*([-+]?\d*\.?\d+)\s*\]\s*,",
+        text,
+    )
+    if m0:
+        pairs = [(m0.group(1), m0.group(2))] + list(pairs)
+    else:
+        m0b = re.match(r"^([-+]?\d*\.?\d+)\s*,\s*([-+]?\d*\.?\d+)\s*\]", text)
+        if m0b:
+            pairs = [(m0b.group(1), m0b.group(2))] + list(pairs)
+    if not pairs:
+        return None
+    return [[float(a), float(b)] for a, b in pairs]
+
+
+def _ar1_ade_fde_pair(
+    pred: Sequence[Sequence[float]], gt: Sequence[Sequence[float]]
+) -> Optional[Tuple[float, float, int]]:
+    if not pred or not gt:
+        return None
+    t = min(len(pred), len(gt))
+    if t <= 0:
+        return None
+    errs: List[float] = []
+    for i in range(t):
+        dx = float(pred[i][0]) - float(gt[i][0])
+        dy = float(pred[i][1]) - float(gt[i][1])
+        errs.append(math.hypot(dx, dy))
+    return sum(errs) / t, errs[-1], t
+
+
+def cmd_ar1(argv: Optional[Sequence[str]] = None) -> int:
+    script_dir = Path(__file__).resolve().parent
+    ap = argparse.ArgumentParser(
+        description="AR1 ADE/FDE (meters) + latency; GT from test jsonl"
+    )
+    ap.add_argument(
+        "--results_json",
+        type=Path,
+        default=script_dir / "output/ar1/ar1_results.json",
+    )
+    ap.add_argument(
+        "--test_jsonl",
+        type=Path,
+        default=script_dir / "test_data/ar1_test.jsonl",
+    )
+    ap.add_argument("--output_eval_json", type=Path, default=None)
+    args = ap.parse_args(argv)
+
+    if not args.results_json.is_file():
+        print(f"ERROR: results_json not found: {args.results_json}", file=sys.stderr)
+        return 1
+    if not args.test_jsonl.is_file():
+        print(f"ERROR: test_jsonl not found: {args.test_jsonl}", file=sys.stderr)
+        return 1
+
+    gt_map = _load_ar1_gt_map(args.test_jsonl)
+    if not gt_map:
+        print(f"No GT trajectories loaded from {args.test_jsonl}", file=sys.stderr)
+        return 1
+
+    with open(args.results_json, encoding="utf-8") as f:
+        data: List[Dict[str, Any]] = json.load(f)
+    if not isinstance(data, list):
+        print("results_json must be a JSON array", file=sys.stderr)
+        return 1
+
+    ades: List[float] = []
+    fdes: List[float] = []
+    latencies: List[float] = []
+    skip_no_pred = skip_no_gt = 0
+
+    for entry in data:
+        if not isinstance(entry, dict):
+            continue
+        pred = _ar1_parse_pred_from_output_text(entry.get("output_text") or "")
+        img_raw = _ar1_first_user_image(entry)
+        if pred is None:
+            skip_no_pred += 1
+            continue
+        if not img_raw:
+            skip_no_gt += 1
+            continue
+        img_k = _canonical_ar1_image_key(img_raw)
+        if img_k not in gt_map:
+            skip_no_gt += 1
+            continue
+        gt = gt_map[img_k]
+        out = _ar1_ade_fde_pair(pred, gt)
+        if out is None:
+            skip_no_pred += 1
+            continue
+        ade, fde, _ = out
+        ades.append(ade)
+        fdes.append(fde)
+        latencies.append(_impromptu_latency_seconds(entry))
+
+    n = len(ades)
+    print("=" * 50)
+    print("AR1 (ego frame, meters)")
+    print(f"results: {args.results_json}")
+    print(f"GT: {args.test_jsonl} (by first image key)")
+    print(f"n_infer_rows: {len(data)}, evaluated: {n}")
+    print(f"skip_no_pred: {skip_no_pred}, skip_no_gt: {skip_no_gt}")
+    if n == 0:
+        print("No matched samples.", file=sys.stderr)
+        return 1
+    avg_lat = float(np.mean(latencies))
+    print(f"ADE (mean over samples): {sum(ades) / n:.6f}")
+    print(f"FDE (mean over samples): {sum(fdes) / n:.6f}")
+    print(f"avg latency (evaluated samples): {avg_lat:.4f} s")
+    print("=" * 50)
+
+    if args.output_eval_json:
+        summary = {
+            "task": "ar1",
+            "results_path": str(args.results_json),
+            "test_jsonl": str(args.test_jsonl),
+            "n": n,
+            "n_infer_rows": len(data),
+            "skip_no_pred": skip_no_pred,
+            "skip_no_gt": skip_no_gt,
+            "avg_ADE": round(sum(ades) / n, 6),
+            "avg_FDE": round(sum(fdes) / n, 6),
+            "avg_latency": round(avg_lat, 4),
+        }
+        args.output_eval_json.parent.mkdir(parents=True, exist_ok=True)
+        with open(args.output_eval_json, "w", encoding="utf-8") as f:
+            json.dump(summary, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        print(f"Wrote {args.output_eval_json}")
+
+    return 0
+
+
 def main() -> None:
     prog = Path(sys.argv[0]).name
     if len(sys.argv) < 2:
         print(
-            f"Usage: {prog} roadwork|impromptu [task options...]\n"
+            f"Usage: {prog} roadwork|impromptu|ar1 [task options...]\n"
             f"  {prog} roadwork --help\n"
-            f"  {prog} impromptu --help",
+            f"  {prog} impromptu --help\n"
+            f"  {prog} ar1 --help",
             file=sys.stderr,
         )
         raise SystemExit(2)
@@ -510,7 +726,9 @@ def main() -> None:
         raise SystemExit(cmd_roadwork(rest))
     if task == "impromptu":
         raise SystemExit(cmd_impromptu(rest))
-    print(f"Unknown task {task!r}. Use: roadwork | impromptu", file=sys.stderr)
+    if task == "ar1":
+        raise SystemExit(cmd_ar1(rest))
+    print(f"Unknown task {task!r}. Use: roadwork | impromptu | ar1", file=sys.stderr)
     raise SystemExit(2)
 
 

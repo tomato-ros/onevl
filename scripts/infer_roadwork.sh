@@ -15,6 +15,7 @@ MODEL_PATH=/e2e-data/evad-tech-vla/lujinghui/ms-swift/outputs/roadwork/qwen3_vl_
 TEST_SET_PATH=${ROOT_DIR}/test_data/roadwork_test.json
 IMAGE_BASE_PATH=/e2e-data/embodied-research-data/opendata/
 PREFIX_K=5
+ANSWER_PREFIX="[["
 
 export MODEL_PATH TEST_SET_PATH IMAGE_BASE_PATH OUTPUT_PATH PREFIX_K
 export DECODER_EXPLAIN VISUAL_DECODER_EXPLAIN
