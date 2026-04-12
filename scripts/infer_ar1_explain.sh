@@ -6,9 +6,9 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ROOT_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
 
 # ---- Configurable ----
-DECODER_EXPLAIN=${DECODER_EXPLAIN:-false}
-VISUAL_DECODER_EXPLAIN=${VISUAL_DECODER_EXPLAIN:-false}
-OUTPUT_PATH=${OUTPUT_PATH:-"${ROOT_DIR}/output/ar1/ar1_results.json"}
+DECODER_EXPLAIN=${DECODER_EXPLAIN:-true}
+VISUAL_DECODER_EXPLAIN=${VISUAL_DECODER_EXPLAIN:-true}
+OUTPUT_PATH=${OUTPUT_PATH:-"${ROOT_DIR}/output/ar1_explain/ar1_results_explain.json"}
 
 # ---- Fixed ----
 MODEL_PATH="/e2e-data/evad-tech-vla/lujinghui/ms-swift/outputs/ar1/qwen3_vl_latent_cot_stage2_vis4_txt2_fixbug_512_bs64_with_viscondition/v2-20260403-102040/checkpoint-9730"
