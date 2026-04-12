@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="assets/onevl_logo.png" alt="OneVL Logo" width="320"/>
-
-# OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations
+# <img src="assets/onevl_logo.png" alt="OneVL Logo" height="48" style="vertical-align:middle"/> OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations
 
 [![Tech Report](https://img.shields.io/badge/Tech%20Report-arXiv-red?style=flat-square&logo=arxiv)](https://arxiv.org/abs/XXXX.XXXXX)
 [![Project Page](https://img.shields.io/badge/Project%20Page-blue?style=flat-square&logo=googlechrome)](https://onevl-project.github.io)
