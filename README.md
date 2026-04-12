@@ -15,19 +15,21 @@
 
 **OneVL** is a Vision-Language-Action (VLA) framework for autonomous driving that achieves **state-of-the-art trajectory prediction accuracy** with **inference latency matching answer-only AR models**. It overcomes the fundamental limitations of prior latent Chain-of-Thought (CoT) methods by introducing dual-modal auxiliary decoders that supervise compact latent tokens to encode both linguistic reasoning and future scene dynamics.
 
-### Three CoT Paradigms
-
 <div align="center">
-<img src="assets/comparison.png" alt="Comparison of three CoT paradigms" width="90%"/>
+<img src="assets/comparison.png" alt="Comparison of three CoT paradigms" width="48%"/>  <img src="assets/main_framework.png" alt="OneVL architecture" width="48%"/>
 </div>
 
-> **(a) Explicit CoT** generates a full reasoning chain before the answer — interpretable but slow. **(b) Implicit CoT** compresses reasoning into opaque latent vectors — fast but not interpretable. **(c) OneVL (ours)** uses visual latent tokens `v` and language latent tokens `l`; during training, dual auxiliary decoders decode these into future frames and CoT text respectively. At inference, decoders are discarded and latents are **prefilled** into the prompt — matching the speed of (b) while recovering the interpretability of (a) in both vision and language.
+> **Left — Three CoT paradigms:** **(a) Explicit CoT** generates a full reasoning chain — interpretable but slow. **(b) Implicit CoT** uses opaque latent vectors — fast but not interpretable. **(c) OneVL** uses visual latent tokens `v` and language latent tokens `l`; dual auxiliary decoders decode these into future frames and CoT text during training. At inference, decoders are discarded and latents are **prefilled** — matching the speed of (b) while recovering the interpretability of (a).  **Right — Architecture:** hidden states at visual latent positions are routed to the **Visual Aux. Decoder** (predicts future frames, $\mathcal{L}_v$) and at language latent positions to the **Language Aux. Decoder** (predicts CoT text, $\mathcal{L}_l$). Both decoders are discarded at inference.
 
 ### Key Innovations
 
 - **Dual-Modal Auxiliary Decoders**: A *language auxiliary decoder* reconstructs human-readable CoT reasoning from language latent tokens; a *visual auxiliary decoder* predicts future scene frames from visual latent tokens, acting as a **world model** that grounds the latents in physical scene dynamics.
 - **Prefill Inference**: All latent tokens are prefilled into the prompt context in a single parallel pass — **1.5× faster than explicit CoT on NAVSIM, 2.3× faster on ROADWork** — with latency essentially identical to answer-only AR prediction.
 - **Compression Drives Generalization**: OneVL is the **only latent CoT method that outperforms explicit autoregressive CoT** across all four benchmarks.
+
+### Architecture Details
+
+OneVL augments **Qwen3-VL-4B-Instruct** with 4 visual latent tokens + 2 language latent tokens placed before the answer. During training, a **Visual Aux. Decoder** predicts future-frame visual tokens (Emu3.5 IBQ, 131k codebook) and a **Language Aux. Decoder** reconstructs CoT text; both are discarded at inference. Training loss: `L = L_ce + 1.0×L_lang + 0.1×L_vis`, three stages: (0) pretraining, (1) visual decoder pretraining, (2) joint fine-tuning.
 
 ---
 
@@ -146,42 +148,6 @@ Both auxiliary decoders contribute measurably; staged training is essential (wit
 <div align="center">
 <img src="assets/nuScences_678_8198.png" alt="Impromptu qualitative example" width="95%"/>
 </div>
-
-### Side-by-Side: Baseline vs. OneVL
-
-<div align="center">
-<img src="assets/main_comparison.png" alt="Main comparison: Baseline vs OneVL on NAVSIM and ROADWork" width="90%"/>
-</div>
-
-> **(a) NAVSIM** and **(b) ROADWork**: baseline trajectory (left) vs. OneVL prediction (right), with predicted future frames and language reasoning decoded from latent tokens.
-
----
-
-## Model Architecture
-
-<div align="center">
-<img src="assets/main_framework.png" alt="OneVL architecture" width="90%"/>
-</div>
-
-> During training, hidden states at visual latent positions are routed to the **Visual Aux. Decoder** (predicts future-frame visual tokens at t+0.5s and t+1.0s, $\mathcal{L}_v$) and at language latent positions to the **Language Aux. Decoder** (predicts CoT text, $\mathcal{L}_l$). During inference, both decoders are discarded; all latent tokens are **prefilled** into the prompt, matching answer-only AR prediction latency.
-
-OneVL augments **Qwen3-VL-4B-Instruct** with:
-
-1. **Latent Token Interface** — 4 visual latent tokens (`<|latent-vis|>`) + 2 language latent tokens (`<|latent|>`) placed in the assistant response before the answer. Realized using existing vocabulary tokens (no new special tokens added), preserving pre-trained representational geometry.
-
-2. **Visual Auxiliary Decoder** — A full Qwen3-VL-4B model with an extended 131,072-token visual codebook (Emu3.5 IBQ). Predicts future-frame visual tokens at t+0.5s and t+1.0s from visual latent hidden states, acting as a **world model** supervision signal.
-
-3. **Language Auxiliary Decoder** — A full Qwen3-VL-4B model that reconstructs explicit CoT reasoning text from language latent hidden states, conditioned on ViT visual features.
-
-4. **Prefill Inference** — Both auxiliary decoders are discarded at inference. Latent tokens are placed in the prefill context, processed in one parallel pass; only the trajectory is generated autoregressively.
-
-**Combined training loss:**
-
-```
-L = L_ce  +  1.0 × L_lang  +  0.1 × L_vis
-```
-
-Three-stage training: (0) VLM pretraining on planning data, (1) visual decoder pretraining as a self-supervised next-frame predictor, (2) joint fine-tuning of the full system.
 
 ---
 
