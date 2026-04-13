@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="assets/onevl_logo.png" alt="OneVL Logo" height="48" style="vertical-align:middle"/> OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations
+# <img src="assets/onevl_logo_1.png" alt="OneVL Logo" height="48" style="vertical-align:middle"/> OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations
 
 [![Tech Report](https://img.shields.io/badge/Tech%20Report-arXiv-red?style=flat-square&logo=arxiv)](https://arxiv.org/abs/XXXX.XXXXX)
 [![Project Page](https://img.shields.io/badge/Project%20Page-blue?style=flat-square&logo=googlechrome)](https://onevl-project.github.io)
@@ -54,7 +54,6 @@ OneVL augments **Qwen3-VL-4B-Instruct** with:
 | ⚖️ Model Weights | ✅ Released |
 | 🔍 Inference Code | ✅ Released (this repo) |
 | 🏋️ Training Code | 🔜 Coming Soon |
-| 📦 Training Data & Annotations | 🔜 Coming Soon |
 
 ---
 
@@ -156,12 +155,6 @@ Both auxiliary decoders contribute measurably; staged training is essential (wit
 <img src="assets/roadwork_example1.png" alt="ROADWork qualitative example" width="95%"/>
 </div>
 
-### Impromptu (Corner-Case Scenarios)
-
-<div align="center">
-<img src="assets/nuScences_678_8198.png" alt="Impromptu qualitative example" width="95%"/>
-</div>
-
 ---
 
 ## Environment Setup
@@ -195,50 +188,6 @@ numpy>=1.24.0
 
 ---
 
-## Repository Structure
-
-```
-onevl_opensource/
-├── infer_onevl.py                 # Core inference script (single GPU)
-├── run_infer.sh                   # Multi-GPU / multi-node inference launcher
-├── eval_results.py                # Evaluation utilities
-├── requirements.txt
-├── assets/                        # Figures and logo for README
-│   ├── onevl_logo.png
-│   ├── teaser_bar.png             # Accuracy–efficiency Pareto figure
-│   ├── main_framework.png         # Architecture overview
-│   ├── comparison.png             # Three CoT paradigms diagram
-│   ├── main_comparison.png        # Qualitative baseline vs. OneVL
-│   ├── navsim_example1.png        # NAVSIM qualitative example
-│   ├── roadwork_example1.png      # ROADWork qualitative example
-│   └── nuScences_678_8198.png     # Impromptu qualitative example
-├── scripts/
-│   ├── infer_navsim.sh            # NAVSIM inference wrapper
-│   ├── infer_ar1.sh               # APR1 inference wrapper
-│   ├── infer_ar1_explain.sh       # APR1 inference with both aux decoders
-│   ├── infer_roadwork.sh          # ROADWork inference wrapper
-│   ├── infer_impromptu.sh         # Impromptu inference wrapper
-│   └── visualize_predict_image_tokens.py  # Decode visual tokens → images
-├── vq_decoder/                    # Self-contained Emu3.5 IBQ VQ model
-│   ├── __init__.py
-│   ├── ibq.py
-│   ├── loader.py
-│   └── modules/
-│       ├── encoder_decoder.py
-│       └── quantize.py
-├── visual_tokenizer/              # Extended tokenizer with 131k visual tokens
-│   ├── tokenization_qwen3vl_visual.py
-│   └── ...
-├── test_data/
-│   ├── navsim_test.json
-│   ├── ar1_test.jsonl
-│   ├── roadwork_test.json
-│   └── impromptu_test.jsonl
-└── output/                        # Inference results (gitignored)
-```
-
----
-
 ## Inference
 
 ### Quick Start (Single GPU)
@@ -250,25 +199,37 @@ source venv/onevl/bin/activate
 python infer_onevl.py \
     --model_path /path/to/OneVL-checkpoint \
     --test_set_path test_data/navsim_test.json \
+    --image_base_path ""
     --output_path output/navsim/results.json \
-    --device cuda:0
+    --device cuda:0 \
+    --num_latent 2 --num_latent_vis 4 \
+    --max_new_tokens 1024 --answer_prefix "[" --prefix_k 0
 
 # With language explanation (text CoT from language aux decoder)
 python infer_onevl.py \
     --model_path /path/to/OneVL-checkpoint \
     --test_set_path test_data/navsim_test.json \
+    --image_base_path ""
     --output_path output/navsim/results_explain.json \
     --device cuda:0 \
-    --decoder_explain --aux_visual_condition
+    --num_latent 2 --num_latent_vis 4 \
+    --max_new_tokens 1024 --answer_prefix "[" --prefix_k 0 \
+    --decoder_explain --aux_visual_condition \
+    --c_thought 2 --max_explain_tokens 1024
 
 # With both language + visual explanation (text CoT + future frame tokens)
 python infer_onevl.py \
     --model_path /path/to/OneVL-checkpoint \
     --test_set_path test_data/navsim_test.json \
+    --image_base_path "" \
     --output_path output/navsim/results_explain.json \
     --device cuda:0 \
+    --num_latent 2 --num_latent_vis 4 \
+    --max_new_tokens 1024 --answer_prefix "[" --prefix_k 0 \
     --decoder_explain --aux_visual_condition \
-    --visual_decoder_explain --visual_aux_visual_condition
+    --c_thought 2 --max_explain_tokens 1024 \
+    --visual_decoder_explain --visual_aux_visual_condition \
+    --c_thought_visual 4 --max_visual_tokens 2560
 ```
 
 ### Multi-GPU Inference (recommended for full test sets)
@@ -288,9 +249,13 @@ The launcher auto-detects available GPUs, shards the test set, runs inference in
 ```bash
 bash scripts/infer_navsim.sh       # NAVSIM
 bash scripts/infer_ar1.sh          # APR1 (trajectory only)
-bash scripts/infer_ar1_explain.sh  # APR1 (language + visual explanations)
 bash scripts/infer_roadwork.sh     # ROADWork
 bash scripts/infer_impromptu.sh    # Impromptu
+```
+
+### For visual cot/text cot explain
+```bash
+bash scripts/infer_ar1_explain.sh  # APR1 (language + visual explanations, use APR1 as example)
 ```
 
 **Environment variables** accepted by all scripts:
@@ -298,29 +263,22 @@ bash scripts/infer_impromptu.sh    # Impromptu
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `MODEL_PATH` | *(required)* | Path to the OneVL checkpoint |
-| `OUTPUT_PATH` | `output/<task>/results.json` | Where to write results |
-| `DECODER_EXPLAIN` | `false` | Enable language auxiliary decoder |
-| `VISUAL_DECODER_EXPLAIN` | `false` | Enable visual auxiliary decoder |
+| `TEST_SET_PATH` | *(required)* | Test JSON / JSONL file |
+| `OUTPUT_PATH` | `<MODEL_PATH>/infer_results/onevl_merged.json` | Where to write merged results |
 | `IMAGE_BASE_PATH` | `""` | Prepended to relative image paths |
 | `NUM_LATENT` | `2` | Number of language latent tokens |
 | `NUM_LATENT_VIS` | `4` | Number of visual latent tokens |
-
-### Key CLI Arguments (`infer_onevl.py`)
-
-| Argument | Description |
-|----------|-------------|
-| `--model_path` | OneVL checkpoint directory |
-| `--test_set_path` | Test JSON (array) or JSONL file |
-| `--output_path` | Output JSON path |
-| `--device` | CUDA device, e.g. `cuda:0` |
-| `--decoder_explain` | Enable text CoT via language aux decoder |
-| `--visual_decoder_explain` | Enable future-frame prediction via visual aux decoder |
-| `--aux_visual_condition` | Condition language aux decoder on ViT features |
-| `--visual_aux_visual_condition` | Condition visual aux decoder on ViT features |
-| `--max_new_tokens` | Max tokens to generate (default: 1024) |
-| `--num_latent` | Language latent token count (default: 2) |
-| `--num_latent_vis` | Visual latent token count (default: 4) |
-| `--answer_prefix` | Prefix after `<answer>` (`[` for NAVSIM, `[[` for APR1) |
+| `MAX_NEW_TOKENS` | `1024` | Max answer tokens to generate |
+| `ANSWER_PREFIX` | `""` | Prefix after `<answer>` (e.g. `[` for NAVSIM, `[[` for APR1) |
+| `PREFIX_K` | `0` |  Prefill first K GT waypoints after `<answer>` (default: 0), only used on ROADWork |
+| `DECODER_EXPLAIN` | `false` | Enable language auxiliary decoder |
+| `AUX_VISUAL_CONDITION` | `true` | *(if DECODER_EXPLAIN=true)* Condition language aux decoder on ViT features (`--aux_visual_condition`) |
+| `C_THOUGHT` | `2` | *(if DECODER_EXPLAIN=true)* Number of latent tokens read by language aux decoder |
+| `MAX_EXPLAIN_TOKENS` | `1024` | *(if DECODER_EXPLAIN=true)* Max tokens generated by language aux decoder |
+| `VISUAL_DECODER_EXPLAIN` | `false` | Enable visual auxiliary decoder |
+| `VISUAL_AUX_VISUAL_CONDITION` | `true` | *(if VISUAL_DECODER_EXPLAIN=true)* Condition visual aux decoder on ViT features (`--visual_aux_visual_condition`) |
+| `C_THOUGHT_VISUAL` | `4` | *(if VISUAL_DECODER_EXPLAIN=true)* Number of latent tokens read by visual aux decoder |
+| `MAX_VISUAL_TOKENS` | `2560` | *(if VISUAL_DECODER_EXPLAIN=true)* Max visual tokens generated by visual aux decoder |
 
 ---
 
