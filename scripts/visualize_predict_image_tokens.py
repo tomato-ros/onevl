@@ -11,9 +11,10 @@ Decodes visual tokens back to images via the Emu3.5 VisionTokenizer (IBQ)
 and saves both side-by-side for human comparison.
 
 Usage:
-  source /e2e-data/evad-tech-vla/lujinghui/venv/onevl/bin/activate
-  cd /e2e-data/evad-tech-vla/lujinghui/onevl_opensource
-  python scripts/compare_original_vs_decoded.py \\
+  source /path/to/venv/bin/activate
+  cd /path/to/onevl_opensource
+  python scripts/visualize_predict_image_tokens.py \\
+    --model_root /path/to/emu35_model_root \\
     --predict_json output/ar1_explain/ar1_results_explain.json \\
     --out_dir output/ar1_explain_compare \\
     -n 10 --device cuda:0
@@ -124,7 +125,7 @@ def main():
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument(
         "--model_root", type=str,
-        default="/e2e-data/embodied-research-data/opendata/roadworks/models/emu35",
+        default="emu35",
         help="Emu3.5 model root (contains Emu3.5-VisionTokenizer/)",
     )
     args = parser.parse_args()

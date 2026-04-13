@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="assets/onevl_logo_1.png" alt="OneVL Logo" height="48" style="vertical-align:middle"/> OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations
+# <img src="assets/onevl_logo_new.png" alt="OneVL Logo" height="48" style="vertical-align:middle"/> OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations
 
 [![Tech Report](https://img.shields.io/badge/Tech%20Report-arXiv-red?style=flat-square&logo=arxiv)](https://arxiv.org/abs/XXXX.XXXXX)
 [![Project Page](https://img.shields.io/badge/Project%20Page-blue?style=flat-square&logo=googlechrome)](https://onevl-project.github.io)
@@ -26,7 +26,7 @@
 ### Architecture
 
 <div align="center">
-<img src="assets/main_framework.png" alt="OneVL architecture" width="90%"/>
+<img src="assets/framework.png" alt="OneVL architecture" width="90%"/>
 </div>
 
 > During training, hidden states at visual latent positions are routed to the **Visual Aux. Decoder** (predicts future-frame visual tokens at t+0.5s and t+1.0s) and at language latent positions to the **Language Aux. Decoder** (reconstructs CoT text). Both decoders are discarded at inference; all latent tokens are **prefilled** into the prompt, matching answer-only AR prediction latency.

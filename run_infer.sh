@@ -13,8 +13,8 @@
 # ============================================================================
 set -e
 
-# ---- Python interpreter (edit to your env) ----
-PYTHON=${PYTHON:-/e2e-data/evad-tech-vla/lujinghui/venv/onevl/bin/python3}
+# ---- Python interpreter (override with PYTHON=/path/to/python if needed) ----
+PYTHON=${PYTHON:-python3}
 
 # ---- Paths (edit these) ----
 MODEL_PATH=${MODEL_PATH:?  "Set MODEL_PATH to the OneVL checkpoint directory"}
