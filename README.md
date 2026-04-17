@@ -2,9 +2,9 @@
 
 # <img src="assets/onevl_logo_new.png" alt="OneVL Logo" height="48" style="vertical-align:middle"/> OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations
 
-[![Tech Report](https://img.shields.io/badge/Tech%20Report-arXiv-red?style=flat-square&logo=arxiv)](https://arxiv.org/abs/XXXX.XXXXX)
-[![Project Page](https://img.shields.io/badge/Project%20Page-blue?style=flat-square&logo=googlechrome)](https://onevl-project.github.io)
-[![Model Weights](https://img.shields.io/badge/Model%20Weights-HuggingFace-yellow?style=flat-square&logo=huggingface)](https://huggingface.co/xiaomi-ev/OneVL)
+[![Tech Report](https://img.shields.io/badge/Tech%20Report-arXiv-red?style=flat-square&logo=arxiv)](https://xiaomi-embodied-intelligence.github.io/OneVL/)
+[![Project Page](https://img.shields.io/badge/Project%20Page-blue?style=flat-square&logo=googlechrome)](https://xiaomi-embodied-intelligence.github.io/OneVL/)
+[![Model Weights](https://img.shields.io/badge/Model%20Weights-HuggingFace-yellow?style=flat-square&logo=huggingface)](https://xiaomi-embodied-intelligence.github.io/OneVL/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=flat-square)](LICENSE)
 
 </div>
@@ -50,9 +50,9 @@ OneVL augments **Qwen3-VL-4B-Instruct** with:
 
 | Component | Status |
 |-----------|--------|
-| 📄 Technical Report | ✅ Released |
-| ⚖️ Model Weights | ✅ Released |
-| 🔍 Inference Code | ✅ Released (this repo) |
+| 📄 Technical Report | ✅ Release soon |
+| ⚖️ Model Weights | ✅ Release soon |
+| 🔍 Inference Code | ✅ Release soon (this repo) |
 | 🏋️ Training Code | 🔜 Coming Soon |
 
 ---
@@ -73,8 +73,8 @@ OneVL augments **Qwen3-VL-4B-Instruct** with:
 |--------|:----------:|:-----------:|:-------------:|:----------------:|
 | AdaThinkDrive | 8B | 86.20 | — | Language |
 | LaST-VLA | 8B | 87.30 | — | — |
-| AR Answer | 4B | 87.47 | 4.49 | — |
-| AR CoT+Answer | 4B | 88.29 | 6.58 | Language |
+| AR Answer | 4B | 87.47 | <u>4.49</u> | — |
+| AR CoT+Answer | 4B | <u>88.29</u> | 6.58 | Language |
 | COCONUT | 4B | 84.84 | 5.93 | — |
 | CODI | 4B | 83.92 | 8.62 | — |
 | SIM-CoT | 4B | 84.21 | 10.86 | Language |
@@ -85,8 +85,8 @@ OneVL augments **Qwen3-VL-4B-Instruct** with:
 | Method | ADE (px) ↓ | FDE (px) ↓ | Latency (s) ↓ | Interpretability |
 |--------|:----------:|:----------:|:-------------:|:----------------:|
 | YNet | 22.68 | 80.78 | — | — |
-| AR Answer | 15.98 | 40.29 | 4.74 | — |
-| AR CoT+Answer | 13.18 | 29.98 | 10.74 | Language |
+| AR Answer | 15.98 | 40.29 | <u>4.74</u> | — |
+| AR CoT+Answer | <u>13.18</u> | <u>29.98</u> | 10.74 | Language |
 | COCONUT | 15.44 | 38.60 | 6.06 | — |
 | CODI | 16.45 | 44.28 | 6.73 | — |
 | SIM-CoT | 16.49 | 44.32 | 6.19 | Language |
@@ -97,8 +97,8 @@ OneVL augments **Qwen3-VL-4B-Instruct** with:
 | Method | ADE (m) ↓ | FDE (m) ↓ | Latency (s) ↓ | Interpretability |
 |--------|:---------:|:---------:|:-------------:|:----------------:|
 | Impromptu VLA | 1.60 | 4.28 | 6.10 | — |
-| AR Answer | 1.46 | 4.03 | 4.24 | — |
-| AR CoT+Answer | 1.42 | 3.96 | 6.84 | Language |
+| AR Answer | 1.46 | 4.03 | <u>4.24</u> | — |
+| AR CoT+Answer | <u>1.42</u> | <u>3.96</u> | 6.84 | Language |
 | COCONUT | 1.49 | 4.07 | 5.27 | — |
 | CODI | 1.86 | 5.18 | 5.24 | — |
 | SIM-CoT | 2.43 | 6.10 | 5.09 | Language |
@@ -108,21 +108,21 @@ OneVL augments **Qwen3-VL-4B-Instruct** with:
 
 | Method | ADE (m) ↓ | FDE (m) ↓ | Latency (s) ↓ | Interpretability |
 |--------|:---------:|:---------:|:-------------:|:----------------:|
-| Cosmos-Reason | 2.86 | 7.42 | — | Language |
+| Cosmos-Reason | <u>2.86</u> | **7.42** | — | Language |
 | AR Answer | 3.27 | 9.59 | 3.06 | — |
 | AR CoT+Answer | 2.99 | 8.54 | 3.51 | Language |
 | COCONUT | 3.29 | 9.48 | 3.76 | — |
 | CODI | 3.22 | 9.25 | 3.85 | — |
 | SIM-CoT | 3.40 | 9.85 | 3.78 | Language |
-| **OneVL** | **2.84** | **8.08** | **3.26** | **Vision + Language** |
+| **OneVL** | **2.62** | <u>7.53</u> | **3.26** | **Vision + Language** |
 
 ### Text CoT Quality (NAVSIM)
 
-| Method | Meta Action Acc. ↑ | STS Score ↑ | LLM Judge ↑ | Avg. ↑ |
-|--------|:-----------------:|:-----------:|:-----------:|:------:|
-| AR CoT+Answer | **73.20** | **79.75** | **81.86** | **78.27** |
-| SIM-CoT | 67.20 | 76.25 | 78.73 | 74.06 |
-| **OneVL** (lang. aux.) | 71.00 | 78.26 | 79.13 | 76.13 |
+| Method | Meta Action Acc. ↑ | STS Score ↑ | LLM Judge ↑ | Avg. ↑ | Latency (s) ↓ |
+|--------|:-----------------:|:-----------:|:-----------:|:------:|:------:|
+| AR CoT+Answer | 73.20 | 79.75 | 81.86 | **78.27** | <u>6.58</u> |
+| SIM-CoT | 67.20 | 76.25 | 78.73 | 74.06 | 10.86 |
+| **OneVL** (lang. aux.) | 71.00 | 78.26 | 79.13 | <u>76.13</u> | **4.46** |
 
 OneVL's language auxiliary decoder recovers 97% of explicit CoT quality while running at answer-only speed.
 
@@ -258,28 +258,6 @@ bash scripts/infer_impromptu.sh    # Impromptu
 bash scripts/infer_ar1_explain.sh  # APR1 (language + visual explanations, use APR1 as example)
 ```
 
-**Environment variables** accepted by all scripts:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MODEL_PATH` | *(required)* | Path to the OneVL checkpoint |
-| `TEST_SET_PATH` | *(required)* | Test JSON / JSONL file |
-| `OUTPUT_PATH` | `<MODEL_PATH>/infer_results/onevl_merged.json` | Where to write merged results |
-| `IMAGE_BASE_PATH` | `""` | Prepended to relative image paths |
-| `NUM_LATENT` | `2` | Number of language latent tokens |
-| `NUM_LATENT_VIS` | `4` | Number of visual latent tokens |
-| `MAX_NEW_TOKENS` | `1024` | Max answer tokens to generate |
-| `ANSWER_PREFIX` | `""` | Prefix after `<answer>` (e.g. `[` for NAVSIM, `[[` for APR1) |
-| `PREFIX_K` | `0` |  Prefill first K GT waypoints after `<answer>` (default: 0), only used on ROADWork |
-| `DECODER_EXPLAIN` | `false` | Enable language auxiliary decoder |
-| `AUX_VISUAL_CONDITION` | `true` | *(if DECODER_EXPLAIN=true)* Condition language aux decoder on ViT features (`--aux_visual_condition`) |
-| `C_THOUGHT` | `2` | *(if DECODER_EXPLAIN=true)* Number of latent tokens read by language aux decoder |
-| `MAX_EXPLAIN_TOKENS` | `1024` | *(if DECODER_EXPLAIN=true)* Max tokens generated by language aux decoder |
-| `VISUAL_DECODER_EXPLAIN` | `false` | Enable visual auxiliary decoder |
-| `VISUAL_AUX_VISUAL_CONDITION` | `true` | *(if VISUAL_DECODER_EXPLAIN=true)* Condition visual aux decoder on ViT features (`--visual_aux_visual_condition`) |
-| `C_THOUGHT_VISUAL` | `4` | *(if VISUAL_DECODER_EXPLAIN=true)* Number of latent tokens read by visual aux decoder |
-| `MAX_VISUAL_TOKENS` | `2560` | *(if VISUAL_DECODER_EXPLAIN=true)* Max visual tokens generated by visual aux decoder |
-
 ---
 
 ## Visualizing Future-Frame Predictions
@@ -335,6 +313,30 @@ The script uses the self-contained `vq_decoder/` module (bundled Emu3.5 IBQ VQ-V
 One JSON object per line, same schema as above.
 
 ---
+
+**Environment variables** accepted by all scripts:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MODEL_PATH` | *(required)* | Path to the OneVL checkpoint |
+| `TEST_SET_PATH` | *(required)* | Test JSON / JSONL file |
+| `OUTPUT_PATH` | `<MODEL_PATH>/infer_results/onevl_merged.json` | Where to write merged results |
+| `IMAGE_BASE_PATH` | `""` | Prepended to relative image paths |
+| `NUM_LATENT` | `2` | Number of language latent tokens |
+| `NUM_LATENT_VIS` | `4` | Number of visual latent tokens |
+| `MAX_NEW_TOKENS` | `1024` | Max answer tokens to generate |
+| `ANSWER_PREFIX` | `""` | Prefix after `<answer>` (e.g. `[` for NAVSIM, `[[` for APR1) |
+| `PREFIX_K` | `0` |  Prefill first K GT waypoints after `<answer>` (default: 0), only used on ROADWork |
+| `DECODER_EXPLAIN` | `false` | Enable language auxiliary decoder |
+| `AUX_VISUAL_CONDITION` | `true` | *(if DECODER_EXPLAIN=true)* Condition language aux decoder on ViT features (`--aux_visual_condition`) |
+| `C_THOUGHT` | `2` | *(if DECODER_EXPLAIN=true)* Number of latent tokens read by language aux decoder |
+| `MAX_EXPLAIN_TOKENS` | `1024` | *(if DECODER_EXPLAIN=true)* Max tokens generated by language aux decoder |
+| `VISUAL_DECODER_EXPLAIN` | `false` | Enable visual auxiliary decoder |
+| `VISUAL_AUX_VISUAL_CONDITION` | `true` | *(if VISUAL_DECODER_EXPLAIN=true)* Condition visual aux decoder on ViT features (`--visual_aux_visual_condition`) |
+| `C_THOUGHT_VISUAL` | `4` | *(if VISUAL_DECODER_EXPLAIN=true)* Number of latent tokens read by visual aux decoder |
+| `MAX_VISUAL_TOKENS` | `2560` | *(if VISUAL_DECODER_EXPLAIN=true)* Max visual tokens generated by visual aux decoder |
+
+--- 
 
 ## Citation
 
