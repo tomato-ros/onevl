@@ -25,7 +25,6 @@ import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from tqdm import tqdm
 from PIL import Image
 from transformers import (
     Qwen3VLForConditionalGeneration,
@@ -649,7 +648,7 @@ def main():
     output_list = []
     need_hidden = (aux_decoder is not None or visual_aux_decoder is not None)
 
-    for idx, item in enumerate(tqdm(test_set, desc="Inference")):
+    for idx, item in enumerate(test_set):
         output_dict = {}
 
         prompt = item["messages"][0]["content"].replace("<image>", "")
