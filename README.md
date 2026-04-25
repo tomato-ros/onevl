@@ -2,7 +2,7 @@
 
 # <img src="assets/onevl_logo_new.png" alt="OneVL Logo" height="48" style="vertical-align:middle"/> OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations
 
-[![Tech Report](https://img.shields.io/badge/Tech%20Report-arXiv-red?style=flat-square&logo=arxiv)](https://xiaomi-embodied-intelligence.github.io/OneVL/)
+[![Tech Report](https://img.shields.io/badge/Tech%20Report-arXiv-red?style=flat-square&logo=arxiv)](https://arxiv.org/abs/2604.18486/)
 [![Project Page](https://img.shields.io/badge/Project%20Page-blue?style=flat-square&logo=googlechrome)](https://xiaomi-embodied-intelligence.github.io/OneVL/)
 [![Model Weights](https://img.shields.io/badge/Model%20Weights-HuggingFace-yellow?style=flat-square&logo=huggingface)](https://xiaomi-embodied-intelligence.github.io/OneVL/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=flat-square)](LICENSE)
@@ -50,9 +50,9 @@ OneVL augments **Qwen3-VL-4B-Instruct** with:
 
 | Component | Status |
 |-----------|--------|
-| 📄 Technical Report | ✅ Release soon |
-| ⚖️ Model Weights | ✅ Release soon |
-| 🔍 Inference Code | ✅ Release soon (this repo) |
+| 📄 Technical Report | ✅ Release |
+| ⚖️ Model Weights | ✅ Release |
+| 🔍 Inference Code | ✅ Release |
 | 🏋️ Training Code | 🔜 Coming Soon |
 
 ---
@@ -257,6 +257,36 @@ bash scripts/infer_impromptu.sh    # Impromptu
 bash scripts/infer_ar1_explain.sh  # APR1 (language + visual explanations, use APR1 as example)
 ```
 
+### Evaluation
+
+AR1, Impromptu, and ROADWork can be evaluated directly with the bundled evaluation script:
+
+```bash
+# AR1
+python eval_results.py ar1 \
+    --results_json output/ar1/ar1_results.json \
+    --test_jsonl test_data/ar1_test.jsonl
+
+# Impromptu
+python eval_results.py impromptu \
+    --results_json output/impromptu/impromptu_results.json \
+    --test_jsonl test_data/impromptu_test.jsonl
+
+# ROADWork
+python eval_results.py roadwork \
+    --json_path output/roadwork/roadwork_results.json
+```
+
+NAVSIM uses the official NAVSIM evaluation pipeline. First convert OneVL inference results to the NAVSIM test format, then evaluate the converted file with the [NAVSIM](https://github.com/autonomousvision/navsim) codebase:
+
+```bash
+python output/navsim/convert_to_eval.py \
+    --input_path output/navsim/navsim_results.json \
+    --ref_path output/navsim/navsim_results_eval.json \
+    --output_path output/navsim/navsim_results_for_eval.json
+```
+
+
 ---
 
 ## Visualizing Future-Frame Predictions
@@ -342,11 +372,12 @@ One JSON object per line, same schema as above.
 If you find this work useful, please cite:
 
 ```bibtex
-@article{onevl2025,
-  title  = {OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanations},
-  author = {},
-  year   = {2025},
-  url    = {https://arxiv.org/abs/XXXX.XXXXX}
+@article{lu2026onevl,
+  title={OneVL: One-Step Latent Reasoning and Planning with Vision-Language Explanation},
+  author={Lu, Jinghui and Guan, Jiayi and Huang, Zhijian and Li, Jinlong and Li, Guang and Kong, Lingdong and Li, Yingyan and Wang, Han and Xu, Shaoqing and Luo, Yuechen and others},
+  journal={arXiv preprint arXiv:2604.18486},
+  year={2026},
+  url={https://arxiv.org/abs/2604.18486}
 }
 ```
 
@@ -364,5 +395,5 @@ Model weights are built on [Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qw
 
 - [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) — backbone VLM
 - [Emu3.5](https://github.com/baaivision/Emu3) — IBQ visual tokenizer
-- [AdaThinkDrive](https://github.com/AdaThinkDrive) — NAVSIM CoT annotations
+- [AdaThinkDrive](https://github.com/luo-yc17/AdaThinkDrive/tree/main) — NAVSIM CoT annotations
 - [NAVSIM](https://github.com/autonomousvision/navsim), [ROADWork](https://github.com/vita-epfl/roadwork), [Impromptu](https://github.com/Xiaomi-CHI/Impromptu) — evaluation benchmarks
