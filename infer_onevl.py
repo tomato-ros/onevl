@@ -489,6 +489,11 @@ def resolve_image_path(rel_path, base_path):
         return os.path.join(base_path, rel_path)
     return rel_path
 
+def print_args(args):
+    print("=" * 80)
+    for k, v in vars(args).items():
+        print(f"{k}: {v}")
+    print("=" * 80)
 
 # ---------------------------------------------------------------------------
 # Main
@@ -542,6 +547,9 @@ def main():
                         help="Prefill first K GT waypoints after <answer>")
 
     args = parser.parse_args()
+
+    print_args(args)
+
     device = args.device
     dtype = torch.bfloat16
 
